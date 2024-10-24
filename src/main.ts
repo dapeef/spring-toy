@@ -13,10 +13,10 @@ resizeCanvas()
 
 const game = new Game(canvas);
 
-let mass1 = new Mass();
+let mass1 = new Mass(new Vector2(15, 5));
 game.addMass(mass1);
 
-let mass2 = new Mass(new Vector2(300, 300));
+let mass2 = new Mass(new Vector2(30, 300));
 game.addMass(mass2);
 
 let spring1 = new Spring(mass1, mass2);
