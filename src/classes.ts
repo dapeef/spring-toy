@@ -135,6 +135,12 @@ export class Mass {
             this._velocity.add(acceleration.times(deltaTime));
             this._velocity.clamp(maxSpeed);
             this._position.add(this._velocity.times(deltaTime));
+
+            // Put hard limit on walls
+            if (this.right <= 0)            {this._velocity.x = 0; this._position.x = -this.size.x/2 + 1} // Left
+            if (this.left >= canvas.width)  {this._velocity.x = 0; this._position.x = canvas.width + this.size.x/2 - 1} // Right
+            if (this.bottom <= 0)           {this._velocity.y = 0; this._position.y = -this.size.y/2 + 1} // Top
+            if (this.top >= canvas.height)  {this._velocity.y = 0; this._position.y = canvas.height + this.size.y/2 - 1} // Bottom
         }
     }
 
