@@ -1,7 +1,6 @@
-import { Mass, Vector2 } from "./classes";
+import { Game, Mass, Spring, Vector2 } from "./classes";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
 function resizeCanvas(): void {
     canvas.width  = window.innerWidth;
@@ -12,7 +11,15 @@ window.addEventListener('resize', resizeCanvas)
 resizeCanvas()
 
 
-let test_mass:Mass = new Mass(new Vector2(300, 300));
-test_mass.draw(ctx);
+const game = new Game(canvas);
 
-console.log('Bosh');
+let mass1 = new Mass();
+game.addMass(mass1);
+
+let mass2 = new Mass(new Vector2(300, 300));
+game.addMass(mass2);
+
+let spring1 = new Spring(mass1, mass2);
+game.addSpring(spring1);
+
+game.start();
