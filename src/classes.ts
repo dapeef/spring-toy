@@ -57,14 +57,20 @@ export class Vector2 {
             this.multiplyBy(magnitude);
         }
     }
+
+    public copy():Vector2 {
+        return new Vector2(this.x, this.y);
+    }
 }
 
 
 export class Mass {
     private springs:Spring[];
     private _velocity:Vector2;
+    public isBeingDragged:boolean = false;
+    public relativeMousePosition:Vector2 = new Vector2();
 
-    constructor(private _position:Vector2 = new Vector2(25, 25), private mass:number = 1, private stiffness:number = 1e-7, private damping:number = 1e0, private size:Vector2 = new Vector2(50, 50)) {
+    constructor(private _position:Vector2 = new Vector2(25, 25), private mass:number = 1, private stiffness:number = 1e-7, private damping:number = 1e0, private _size:Vector2 = new Vector2(50, 50)) {
         this.springs = [];
         this._velocity = new Vector2();
     }
@@ -76,56 +82,60 @@ export class Mass {
     public get velocity() : Vector2 {
         return this._velocity;
     }
+    public get size() : Vector2 {
+        return this._size;
+    }
     
     public get left() : number {
-        return this._position.x - this.size.x/2;
+        return this._position.x - this._size.x/2;
     }
-    
     public get right() : number {
-        return this._position.x + this.size.x/2;
+        return this._position.x + this._size.x/2;
     }
-    
     public get top() : number {
-        return this._position.y - this.size.y/2;
+        return this._position.y - this._size.y/2;
     }
-    
     public get bottom() : number {
-        return this._position.y + this.size.y/2;
+        return this._position.y + this._size.y/2;
     }
 
     public get minSize() : number {
-        return Math.min(this.size.x, this.size.y);
+        return Math.min(this._size.x, this._size.y);
     }
-
 
     public addSpring(spring:Spring):void {
         this.springs.push(spring);
     }
     
-
-    public update(canvas:HTMLCanvasElement, deltaTime:number, gravity:number, maxForce:number, maxSpeed:number):void {
-        let force = new Vector2();
-        // Gravity
-        force.add(new Vector2(0, this.mass * gravity));
-        // Spring  
-        this.springs.forEach(spring => {force.add(spring.getForce(this))});
-        
-        // Bounce off walls
-        let contactSprings:ContactSpring[] = [];
-        if (this.left <= 0)                 {contactSprings.push(new ContactSpring(this, new Mass(new Vector2(-this.size.x/2                , this._position.y)), this.size.x))} // Left
-        if (this.right >= canvas.width)     {contactSprings.push(new ContactSpring(this, new Mass(new Vector2(canvas.width+this.size.x/2    , this._position.y)), this.size.x))} // Right
-        if (this.top <= 0)                  {contactSprings.push(new ContactSpring(this, new Mass(new Vector2(this._position.x, -this.size.y/2                )), this.size.y))} // Top
-        if (this.bottom >= canvas.height)   {contactSprings.push(new ContactSpring(this, new Mass(new Vector2(this._position.x, canvas.height+this.size.y/2   )), this.size.y))} // Bottom
-        contactSprings.forEach(spring => {
-            force.add(spring.getForce(this))});
-
+    public update(canvas:HTMLCanvasElement, deltaTime:number, mousePosition:Vector2, gravity:number, maxForce:number, maxSpeed:number):void {
+        if (this.isBeingDragged) {
+            const oldPosition = this._position.copy();
+            this._position = mousePosition.minus(this.relativeMousePosition);
+            this._velocity = this._position.minus(oldPosition).times(1/deltaTime);
+        } else {
+            let force = new Vector2();
+            // Gravity
+            force.add(new Vector2(0, this.mass * gravity));
+            // Spring  
+            this.springs.forEach(spring => {force.add(spring.getForce(this))});
             
-        // force.clamp(maxForce);
-        
-        let acceleration:Vector2 = force.times(1/this.mass);
-        this._velocity.add(acceleration.times(deltaTime));
-        this._velocity.clamp(maxSpeed);
-        this._position.add(this._velocity.times(deltaTime));
+            // Bounce off walls
+            let contactSprings:ContactSpring[] = [];
+            if (this.left <= 0)                 {contactSprings.push(new ContactSpring(this, new Mass(new Vector2(-this._size.x/2                , this._position.y)), this._size.x))} // Left
+            if (this.right >= canvas.width)     {contactSprings.push(new ContactSpring(this, new Mass(new Vector2(canvas.width+this._size.x/2    , this._position.y)), this._size.x))} // Right
+            if (this.top <= 0)                  {contactSprings.push(new ContactSpring(this, new Mass(new Vector2(this._position.x, -this._size.y/2                )), this._size.y))} // Top
+            if (this.bottom >= canvas.height)   {contactSprings.push(new ContactSpring(this, new Mass(new Vector2(this._position.x, canvas.height+this._size.y/2   )), this._size.y))} // Bottom
+            contactSprings.forEach(spring => {
+                force.add(spring.getForce(this))});
+
+                
+            // force.clamp(maxForce);
+            
+            let acceleration:Vector2 = force.times(1/this.mass);
+            this._velocity.add(acceleration.times(deltaTime));
+            this._velocity.clamp(maxSpeed);
+            this._position.add(this._velocity.times(deltaTime));
+        }
     }
 
     public draw(ctx:CanvasRenderingContext2D):void {
@@ -134,8 +144,8 @@ export class Mass {
         ctx.roundRect(
             this.left,
             this.top,
-            this.size.x,
-            this.size.y,
+            this._size.x,
+            this._size.y,
             this.minSize / 5
         );
         ctx.fill();
@@ -224,6 +234,8 @@ class ContactSpring extends Spring {
 
 export class Game {
     private ctx:CanvasRenderingContext2D;
+    private isMouseDown:boolean = false;
+    private mousePosition = new Vector2();
 
     private lastTime:number; // milliseconds
     private deltaTime:number; // milliseconds
@@ -258,6 +270,33 @@ export class Game {
     }
 
 
+    public mouseDown(evt:MouseEvent):void {
+        this.isMouseDown = true;
+        this.mousePosition.x = evt.x;
+        this.mousePosition.y = evt.y;
+
+        // Work out whether the mouse click was within any of the masses
+        this.masses.forEach(mass => {
+            if (
+                mass.position.x - mass.size.x <= evt.x &&
+                mass.position.x + mass.size.x >= evt.x &&
+                mass.position.y - mass.size.y <= evt.y &&
+                mass.position.y + mass.size.y >= evt.y ) {
+                    mass.isBeingDragged = true;
+                    mass.relativeMousePosition = this.mousePosition.minus(mass.position);
+                }
+        })
+    }
+    public mouseMove(evt:MouseEvent):void {
+        this.mousePosition.x = evt.x;
+        this.mousePosition.y = evt.y;
+    }
+    public mouseUp(evt:MouseEvent):void {
+        this.isMouseDown = false;
+
+        this.masses.forEach(mass => mass.isBeingDragged = false);
+    }
+
     public start():void {
         requestAnimationFrame(this.mainLoop.bind(this));
     }
@@ -274,7 +313,7 @@ export class Game {
     }
 
     private update(deltaTime:number):void {
-        this.masses.forEach((mass) => mass.update(this.canvas, deltaTime, this.gravity, this.maxForce, this.maxSpeed));
+        this.masses.forEach((mass) => mass.update(this.canvas, deltaTime, this.mousePosition, this.gravity, this.maxForce, this.maxSpeed));
         this.springs.forEach((spring) => spring.update());
     }
 
