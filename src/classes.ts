@@ -76,6 +76,10 @@ export class Mass {
         return this._position.y + this.size.y/2;
     }
 
+    public get minSize() : number {
+        return Math.min(this.size.x, this.size.y);
+    }
+
 
     public addSpring(spring:Spring):void {
         this.springs.push(spring);
@@ -94,7 +98,6 @@ export class Mass {
         
         let acceleration:Vector2 = force.times(1/this.mass);
         this._velocity.add(acceleration.times(deltaTime));
-        if (Math.abs(this._velocity.length()) <= 1e-20) {this._velocity = new Vector2()} // If speed is very small, then set to 0 to avoid floating errors
         this._position.add(this._velocity.times(deltaTime));
 
         // Bounce off walls
@@ -110,12 +113,16 @@ export class Mass {
     }
 
     public draw(ctx:CanvasRenderingContext2D):void {
-        ctx.fillRect(
+        ctx.strokeStyle = "black";
+        ctx.beginPath();
+        ctx.roundRect(
             this.left,
             this.top,
             this.size.x,
-            this.size.y
+            this.size.y,
+            this.minSize / 5
         );
+        ctx.fill();
     }
 }
 
@@ -126,7 +133,9 @@ export class Spring {
     private elasticForce:Vector2 = new Vector2();
     private dampingForce:Vector2 = new Vector2();
 
-    constructor(public mass1:Mass, public mass2:Mass, private naturalLength=200, private stiffness:number=1e-7, private damping:number = 1e-4) {
+    private defaultWidth = 10;
+
+    constructor(public mass1:Mass, public mass2:Mass, private naturalLength=200, private stiffness:number=1e-4, private damping:number = 1e-3) {
         this.update()
     }
 
@@ -153,21 +162,22 @@ export class Spring {
         
         // Elastics
         this.elasticForce = direction.times((this.length - this.naturalLength) * this.stiffness)
-        // if (this.elasticForce.length() <= 1e-10) {this.elasticForce = new Vector2()} // If force is very small, then set to 0 to avoid floating errorselasticForce
 
         // Damping
         let relativeSpeed:number = this.mass1.velocity.minus(this.mass2.velocity).dot(direction);
         this.dampingForce = direction.times(relativeSpeed * this.damping)
-        // if (this.dampingForce.length() <= 1e-10) {this.dampingForce = new Vector2()} // If force is very small, then set to 0 to avoid floating errorselasticForce
-
-        console.log(this.length);
-        console.log(relativeSpeed);
-        console.log(this.elasticForce);
-        console.log(this.dampingForce);
     }
 
     public draw(ctx:CanvasRenderingContext2D):void {
+        ctx.beginPath();
 
+        ctx.moveTo(this.mass1.position.x, this.mass1.position.y);
+        ctx.lineTo(this.mass2.position.x, this.mass2.position.y);
+
+        ctx.lineWidth = Math.min(this.defaultWidth * this.naturalLength / this.length, this.mass1.minSize, this.mass2.minSize);
+        ctx.strokeStyle = 'gray';
+
+        ctx.stroke();
     }
 }
 
@@ -176,7 +186,7 @@ export class Game {
     private ctx:CanvasRenderingContext2D;
 
     private lastTime:number; // milliseconds
-    private deltaTime:number; // seconds
+    private deltaTime:number; // milliseconds
     private masses:Mass[];
     private springs:Spring[];
 
@@ -210,7 +220,7 @@ export class Game {
     }
 
     private mainLoop(currentTime:number):void {
-        this.deltaTime = currentTime - this.lastTime / 1000;
+        this.deltaTime = currentTime - this.lastTime;
         this.lastTime = currentTime;
 
         this.update(this.deltaTime);
@@ -221,7 +231,7 @@ export class Game {
     }
 
     private update(deltaTime:number):void {
-        console.log('Update!');
+        console.log(`Update!`);
 
         this.masses.forEach((mass) => mass.update(this.canvas, deltaTime, this.gravity));
         this.springs.forEach((spring) => spring.update());
@@ -231,6 +241,7 @@ export class Game {
         // Clear screen
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+        this.springs.forEach((string) => string.draw(this.ctx));
         this.masses.forEach((mass) => mass.draw(this.ctx));
     }
 }
