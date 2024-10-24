@@ -44,7 +44,11 @@ export class Vector2 {
     }
 
     public normalized():Vector2 {
-        return this.times(1/this.length());
+        if (this.length() === 0) {
+            return this
+        } else {
+            return this.times(1/this.length());
+        }
     }
 
     public dot(vector:Vector2):number {
@@ -70,7 +74,7 @@ export class Mass {
     public isBeingDragged:boolean = false;
     public relativeMousePosition:Vector2 = new Vector2();
 
-    constructor(private _position:Vector2 = new Vector2(25, 25), private mass:number = 1, private stiffness:number = 1e-7, private damping:number = 1e0, private _size:Vector2 = new Vector2(50, 50)) {
+    constructor(private _position:Vector2 = new Vector2(25, 25), private mass:number = 1, private stiffness:number = 1e-7, private damping:number = 1e0, private _size:Vector2 = new Vector2(50, 50), private dragCoefficient:number = 5e-4) {
         this.springs = [];
         this._velocity = new Vector2();
     }
@@ -127,10 +131,11 @@ export class Mass {
             if (this.bottom >= canvas.height)   {contactSprings.push(new ContactSpring(this, new Mass(new Vector2(this._position.x, canvas.height+this._size.y/2   )), this._size.y))} // Bottom
             contactSprings.forEach(spring => {
                 force.add(spring.getForce(this))});
-
-                
-            // force.clamp(maxForce);
             
+            // Air resistance
+            force.add(this._velocity.normalized().times(-this.dragCoefficient * Math.pow(this._velocity.length(), 2)));
+            
+            // Compute differential equations
             let acceleration:Vector2 = force.times(1/this.mass);
             this._velocity.add(acceleration.times(deltaTime));
             this._velocity.clamp(maxSpeed);
@@ -147,13 +152,21 @@ export class Mass {
     public draw(ctx:CanvasRenderingContext2D):void {
         ctx.strokeStyle = "black";
         ctx.beginPath();
-        ctx.roundRect(
-            this.left,
-            this.top,
-            this._size.x,
-            this._size.y,
-            this.minSize / 5
-        );
+        // ctx.roundRect(
+        //     this.left,
+        //     this.top,
+        //     this._size.x,
+        //     this._size.y,
+        //     this.minSize / 5
+        // );
+        ctx.ellipse(
+            this._position.x,
+            this._position.y,
+            this._size.x/2,
+            this._size.y/2,
+            0,
+            0, 2*Math.PI
+        )
         ctx.fill();
     }
 }
