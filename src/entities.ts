@@ -2,12 +2,14 @@ import { Vector2 } from "./utilities";
 
 export class Mass {
     private springs:Spring[];
+    private entitySprings:Spring[];
     private _velocity:Vector2;
     public isBeingDragged:boolean = false;
     public relativeMousePosition:Vector2 = new Vector2();
 
     constructor(private _position:Vector2 = new Vector2(25, 25), private mass:number = 1, private stiffness:number = 1e-7, private damping:number = 1e0, private _size:Vector2 = new Vector2(50, 50), private dragCoefficient:number = 5e-4) {
         this.springs = [];
+        this.entitySprings = [];
         this._velocity = new Vector2();
     }
 
@@ -38,12 +40,20 @@ export class Mass {
     public get minSize() : number {
         return Math.min(this._size.x, this._size.y);
     }
+    public get maxSize() : number {
+        return Math.max(this._size.x, this._size.y);
+    }
+
 
     public addSpring(spring:Spring):void {
         this.springs.push(spring);
     }
+    public addEntitySpring(spring:Spring):void {
+        this.entitySprings.push(spring);
+    }
     
-    public update(canvas:HTMLCanvasElement, deltaTime:number, mousePosition:Vector2, gravity:number, maxForce:number, maxSpeed:number):void {
+
+    public update(canvas:HTMLCanvasElement, deltaTime:number, mousePosition:Vector2, masses:Mass[], gravity:number, maxForce:number, maxSpeed:number):void {
         if (this.isBeingDragged) {
             const oldPosition = this._position.copy();
             this._position = mousePosition.minus(this.relativeMousePosition);
@@ -52,17 +62,20 @@ export class Mass {
             let force = new Vector2();
             // Gravity
             force.add(new Vector2(0, this.mass * gravity));
-            // Spring  
+
+            // Springs
             this.springs.forEach(spring => {force.add(spring.getForce(this))});
             
             // Bounce off walls
-            let contactSprings:ContactSpring[] = [];
-            if (this.left <= 0)                 {contactSprings.push(new ContactSpring(this, new Mass(new Vector2(-this._size.x/2                , this._position.y)), this._size.x))} // Left
-            if (this.right >= canvas.width)     {contactSprings.push(new ContactSpring(this, new Mass(new Vector2(canvas.width+this._size.x/2    , this._position.y)), this._size.x))} // Right
-            if (this.top <= 0)                  {contactSprings.push(new ContactSpring(this, new Mass(new Vector2(this._position.x, -this._size.y/2                )), this._size.y))} // Top
-            if (this.bottom >= canvas.height)   {contactSprings.push(new ContactSpring(this, new Mass(new Vector2(this._position.x, canvas.height+this._size.y/2   )), this._size.y))} // Bottom
-            contactSprings.forEach(spring => {
-                force.add(spring.getForce(this))});
+            let wallSprings:ContactSpring[] = [];
+            if (this.left <= 0)                 {wallSprings.push(new ContactSpring(this, new Mass(new Vector2(-this._size.x/2                , this._position.y)), this._size.x))} // Left
+            if (this.right >= canvas.width)     {wallSprings.push(new ContactSpring(this, new Mass(new Vector2(canvas.width+this._size.x/2    , this._position.y)), this._size.x))} // Right
+            if (this.top <= 0)                  {wallSprings.push(new ContactSpring(this, new Mass(new Vector2(this._position.x, -this._size.y/2                )), this._size.y))} // Top
+            if (this.bottom >= canvas.height)   {wallSprings.push(new ContactSpring(this, new Mass(new Vector2(this._position.x, canvas.height+this._size.y/2   )), this._size.y))} // Bottom
+            wallSprings.forEach(spring => {force.add(spring.getForce(this))});
+            
+            // Bounce off other entities
+            this.entitySprings.forEach(spring => {force.add(spring.getForce(this))});
             
             // Air resistance
             force.add(this._velocity.normalized().times(-this.dragCoefficient * Math.pow(this._velocity.length(), 2)));
@@ -154,7 +167,7 @@ export class Spring {
     }
 }
 
-class ContactSpring extends Spring {
+export class ContactSpring extends Spring {
     private hertzExponent:number = 2;
     private penaltyExponent:number = .5;
 
@@ -167,17 +180,21 @@ class ContactSpring extends Spring {
         this.relativePos = this.mass1.position.minus(this.mass2.position);
         this.length = this.relativePos.length();
         let direction = this.relativePos.normalized();
-        
-        // Elastics
-        const hooke = Math.pow(this.naturalLength - this.length, this.hertzExponent) * this.stiffness;
-        const penalty = 1 + 1 / Math.pow(this.length, this.penaltyExponent);
-        this.elasticForce = direction.times(hooke * penalty).times(-1);
 
-        // Damping
-        let relativeSpeed:number = this.mass1.velocity.minus(this.mass2.velocity).dot(direction);
-        this.dampingForce = direction.times(relativeSpeed * this.damping)
+        if (this.length < this.naturalLength) {
+            // Elastics
+            const hooke = Math.pow(this.naturalLength - this.length, this.hertzExponent) * this.stiffness;
+            const penalty = 1 + 1 / Math.pow(this.length, this.penaltyExponent);
+            this.elasticForce = direction.times(hooke * penalty).times(-1);
 
-        // Total force
-        this.force = this.elasticForce.plus(this.dampingForce);
+            // Damping
+            let relativeSpeed:number = this.mass1.velocity.minus(this.mass2.velocity).dot(direction);
+            this.dampingForce = direction.times(relativeSpeed * this.damping)
+
+            // Total force
+            this.force = this.elasticForce.plus(this.dampingForce);
+        } else {
+            this.force = new Vector2();
+        }
     }
 }

@@ -1,5 +1,5 @@
 import { DemoType, Vector2 } from "./utilities";
-import { Mass, Spring } from "./entities";
+import { Mass, Spring, ContactSpring } from "./entities";
 
 export class Game {
     private ctx:CanvasRenderingContext2D;
@@ -10,6 +10,7 @@ export class Game {
     private maxDeltaTime:number = 50; //milliseconds
     private masses:Mass[];
     private springs:Spring[];
+    private entitySprings:Spring[];
 
     private gravity:number = 5e-4; // pixels/msec/msec
     private maxForce:number = 1e-1;
@@ -23,13 +24,20 @@ export class Game {
 
         this.masses = [];
         this.springs = [];
+        this.entitySprings = [];
     }
 
 
     public addMass(mass:Mass):void {
+        this.masses.forEach(existingMass => {
+            let newSpring = new ContactSpring(existingMass, mass, existingMass.maxSize/2 + mass.maxSize/2);
+            this.entitySprings.push(newSpring);
+            existingMass.addEntitySpring(newSpring);
+            mass.addEntitySpring(newSpring)
+        });
+        
         this.masses.push(mass);
     }
-
     public addSpring(spring:Spring):void {
         this.springs.push(spring);
         
@@ -159,7 +167,6 @@ export class Game {
     public start():void {
         requestAnimationFrame(this.mainLoop.bind(this));
     }
-
     private mainLoop(currentTime:number):void {
         this.deltaTime = Math.min(currentTime - this.lastTime, this.maxDeltaTime);
         this.lastTime = currentTime;
@@ -170,12 +177,11 @@ export class Game {
 
         requestAnimationFrame(this.mainLoop.bind(this));
     }
-
     private update(deltaTime:number):void {
-        this.masses.forEach((mass) => mass.update(this.canvas, deltaTime, this.mousePosition, this.gravity, this.maxForce, this.maxSpeed));
+        this.masses.forEach((mass) => mass.update(this.canvas, deltaTime, this.mousePosition, this.masses, this.gravity, this.maxForce, this.maxSpeed));
         this.springs.forEach((spring) => spring.update());
+        this.entitySprings.forEach((spring) => spring.update());
     }
-
     private draw():void {
         // Clear screen
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
