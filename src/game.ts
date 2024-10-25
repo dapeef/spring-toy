@@ -51,16 +51,33 @@ export class Game {
         this.mousePosition.y = evt.y;
 
         // Work out whether the mouse click was within any of the masses
+        let massesUnderMouse:Mass[] = [];
+
         this.masses.forEach(mass => {
             if (
                 mass.position.x - mass.size.x <= evt.x &&
                 mass.position.x + mass.size.x >= evt.x &&
                 mass.position.y - mass.size.y <= evt.y &&
                 mass.position.y + mass.size.y >= evt.y ) {
-                    mass.isBeingDragged = true;
-                    mass.relativeMousePosition = this.mousePosition.minus(mass.position);
+                    massesUnderMouse.push(mass);
                 }
-        })
+        });
+          
+        // Select mass closest to mouse
+        if (massesUnderMouse.length > 0) {
+            let closestMass:Mass = massesUnderMouse[0];
+            let closestMassDistance:number = Infinity;
+
+            massesUnderMouse.forEach(mass =>{
+                if (this.mousePosition.minus(mass.position).length() < closestMassDistance) {
+                    closestMass = mass;
+                    closestMassDistance = this.mousePosition.minus(mass.position).length();
+                }
+            });
+
+            closestMass.isBeingDragged = true;
+            closestMass.relativeMousePosition = this.mousePosition.minus(closestMass.position);
+        }
     }
     public mouseMove(evt:MouseEvent):void {
         this.mousePosition.x = evt.x;
