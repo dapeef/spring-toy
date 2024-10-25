@@ -14,9 +14,12 @@ resizeCanvas()
 
 const game = new Game(canvas);
 
-canvas.onmousedown = game.mouseDown.bind(game);
-canvas.onmousemove = game.mouseMove.bind(game);
-canvas.onmouseup = game.mouseUp.bind(game);
+canvas.addEventListener("mousedown", game.mouseDown.bind(game));
+canvas.addEventListener("mousemove", game.mouseMove.bind(game));
+canvas.addEventListener("mouseup", game.mouseUp.bind(game));
+canvas.addEventListener("touchstart", game.mouseDown.bind(game), {passive: false});
+canvas.addEventListener("touchmove", game.mouseMove.bind(game), {passive: false});
+canvas.addEventListener("touchend", game.mouseUp.bind(game), {passive: false});
 
 const randEnum = Math.floor(Math.random() * Object.keys(DemoType).length / 2)
 game.createDemo(randEnum);

@@ -46,19 +46,26 @@ export class Game {
     }
 
 
-    public mouseDown(evt:MouseEvent):void {
-        this.mousePosition.x = evt.x;
-        this.mousePosition.y = evt.y;
+    public mouseDown(evt:MouseEvent | TouchEvent):void {
+        evt.preventDefault();  // Prevents mouse emulation on touch events
+        if (evt instanceof MouseEvent) {
+            this.mousePosition.x = evt.clientX;
+            this.mousePosition.y = evt.clientY;
+        } else if (evt instanceof TouchEvent) {
+            const touch = evt.touches[0];
+            this.mousePosition.x = touch.clientX;
+            this.mousePosition.y = touch.clientY;
+        }
 
         // Work out whether the mouse click was within any of the masses
         let massesUnderMouse:Mass[] = [];
 
         this.masses.forEach(mass => {
             if (
-                mass.position.x - mass.size.x <= evt.x &&
-                mass.position.x + mass.size.x >= evt.x &&
-                mass.position.y - mass.size.y <= evt.y &&
-                mass.position.y + mass.size.y >= evt.y ) {
+                mass.position.x - mass.size.x <= this.mousePosition.x &&
+                mass.position.x + mass.size.x >= this.mousePosition.x &&
+                mass.position.y - mass.size.y <= this.mousePosition.y &&
+                mass.position.y + mass.size.y >= this.mousePosition.y ) {
                     massesUnderMouse.push(mass);
                 }
         });
@@ -79,11 +86,18 @@ export class Game {
             closestMass.relativeMousePosition = this.mousePosition.minus(closestMass.position);
         }
     }
-    public mouseMove(evt:MouseEvent):void {
-        this.mousePosition.x = evt.x;
-        this.mousePosition.y = evt.y;
+    public mouseMove(evt:MouseEvent | TouchEvent):void {
+        evt.preventDefault();  // Prevents mouse emulation on touch events
+        if (evt instanceof MouseEvent) {
+            this.mousePosition.x = evt.clientX;
+            this.mousePosition.y = evt.clientY;
+        } else if (evt instanceof TouchEvent) {
+            const touch = evt.touches[0];
+            this.mousePosition.x = touch.clientX;
+            this.mousePosition.y = touch.clientY;
+        }
     }
-    public mouseUp(evt:MouseEvent):void {
+    public mouseUp(evt:MouseEvent | TouchEvent):void {
         this.masses.forEach(mass => mass.isBeingDragged = false);
     }
     
@@ -180,15 +194,13 @@ export class Game {
             this.addSpring(spring8);
         }
 
-        
-
         if (type === DemoType.Hexagon) {
-            let centerMass = new Mass(new Vector2(400, 400));
+            let centerMass = new Mass(new Vector2(300, 300));
             this.addMass(centerMass);
 
             let edgeMasses:Mass[] = [];
             for (let i = 0; i < 6; i++) {
-                const newMass = new Mass(new Vector2(300 + 150*Math.cos(i*Math.PI/3), 300 + 150*Math.sin(i*Math.PI/3)));
+                const newMass = new Mass(new Vector2(180 + 150*Math.cos(i*Math.PI/3), 180 + 150*Math.sin(i*Math.PI/3)));
                 edgeMasses.push(newMass);
                 this.addMass(newMass);
             }
