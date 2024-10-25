@@ -1,4 +1,5 @@
-import { DemoType, Game, Mass, Spring, Vector2 } from "./classes";
+import { DemoType } from "./utilities";
+import { Game } from "./game";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 
