@@ -2,7 +2,8 @@ export enum DemoType {
     Triangle,
     Parallelogram,
     Square,
-    CenteredSquare
+    CenteredSquare,
+    Hexagon
 }
 
 

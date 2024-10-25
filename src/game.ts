@@ -179,6 +179,25 @@ export class Game {
             this.addSpring(spring7);
             this.addSpring(spring8);
         }
+
+        
+
+        if (type === DemoType.Hexagon) {
+            let centerMass = new Mass(new Vector2(400, 400));
+            this.addMass(centerMass);
+
+            let edgeMasses:Mass[] = [];
+            for (let i = 0; i < 6; i++) {
+                const newMass = new Mass(new Vector2(300 + 150*Math.cos(i*Math.PI/3), 300 + 150*Math.sin(i*Math.PI/3)));
+                edgeMasses.push(newMass);
+                this.addMass(newMass);
+            }
+
+            for (let i = 0; i < 6; i++) {
+                this.addSpring(new Spring(edgeMasses[i], edgeMasses[(i+1) % 6]));
+                this.addSpring(new Spring(edgeMasses[i], centerMass));
+            }
+        }
     }
 
     public start():void {

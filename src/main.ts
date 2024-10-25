@@ -20,5 +20,6 @@ canvas.onmouseup = game.mouseUp.bind(game);
 
 const randEnum = Math.floor(Math.random() * Object.keys(DemoType).length / 2)
 game.createDemo(randEnum);
+// game.createDemo(DemoType.Hexagon);
 
 game.start();
