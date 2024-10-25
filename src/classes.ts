@@ -1,3 +1,11 @@
+export enum DemoType {
+    Triangle,
+    Parallelogram,
+    Square,
+    CenteredSquare
+}
+
+
 export class Vector2 {
     constructor(public x:number = 0, public y:number = 0) {};
 
@@ -315,97 +323,99 @@ export class Game {
 
         this.masses.forEach(mass => mass.isBeingDragged = false);
     }
+    
+    public createDemo(type:DemoType):void {
+        if (type === DemoType.Triangle) {
+            let mass1 = new Mass(new Vector2(15, 30));
+            let mass2 = new Mass(new Vector2(30, 300));
+            let mass3 = new Mass(new Vector2(300, 30));
+            this.addMass(mass1);
+            this.addMass(mass2);
+            this.addMass(mass3);
 
-    public createDemoSystemTriangle():void {
-        let mass1 = new Mass(new Vector2(15, 30));
-        let mass2 = new Mass(new Vector2(30, 300));
-        let mass3 = new Mass(new Vector2(300, 30));
-        this.addMass(mass1);
-        this.addMass(mass2);
-        this.addMass(mass3);
+            let spring1 = new Spring(mass1, mass2);
+            let spring2 = new Spring(mass2, mass3);
+            let spring3 = new Spring(mass1, mass3);
+            this.addSpring(spring1);
+            this.addSpring(spring2);
+            this.addSpring(spring3);
+        }
 
-        let spring1 = new Spring(mass1, mass2);
-        let spring2 = new Spring(mass2, mass3);
-        let spring3 = new Spring(mass1, mass3);
-        this.addSpring(spring1);
-        this.addSpring(spring2);
-        this.addSpring(spring3);
-    }
+        if (type === DemoType.Parallelogram) {
+            let mass1 = new Mass(new Vector2(30, 30));
+            let mass2 = new Mass(new Vector2(30, 300));
+            let mass3 = new Mass(new Vector2(300, 30));
+            let mass4 = new Mass(new Vector2(300, 300));
+            this.addMass(mass1);
+            this.addMass(mass2);
+            this.addMass(mass3);
+            this.addMass(mass4);
 
-    public createDemoSystemParallelogram():void {
-        let mass1 = new Mass(new Vector2(30, 30));
-        let mass2 = new Mass(new Vector2(30, 300));
-        let mass3 = new Mass(new Vector2(300, 30));
-        let mass4 = new Mass(new Vector2(300, 300));
-        this.addMass(mass1);
-        this.addMass(mass2);
-        this.addMass(mass3);
-        this.addMass(mass4);
+            let spring1 = new Spring(mass1, mass2);
+            let spring2 = new Spring(mass2, mass3);
+            let spring3 = new Spring(mass1, mass3);
+            let spring4 = new Spring(mass3, mass4);
+            let spring5 = new Spring(mass2, mass4);
+            this.addSpring(spring1);
+            this.addSpring(spring2);
+            this.addSpring(spring3);
+            this.addSpring(spring4);
+            this.addSpring(spring5);
+        }
 
-        let spring1 = new Spring(mass1, mass2);
-        let spring2 = new Spring(mass2, mass3);
-        let spring3 = new Spring(mass1, mass3);
-        let spring4 = new Spring(mass3, mass4);
-        let spring5 = new Spring(mass2, mass4);
-        this.addSpring(spring1);
-        this.addSpring(spring2);
-        this.addSpring(spring3);
-        this.addSpring(spring4);
-        this.addSpring(spring5);
-    }
+        if (type === DemoType.Square) {
+            let mass1 = new Mass(new Vector2(30, 30));
+            let mass2 = new Mass(new Vector2(30, 300));
+            let mass3 = new Mass(new Vector2(300, 30));
+            let mass4 = new Mass(new Vector2(300, 300));
+            this.addMass(mass1);
+            this.addMass(mass2);
+            this.addMass(mass3);
+            this.addMass(mass4);
 
-    public createDemoSystemSquare():void {
-        let mass1 = new Mass(new Vector2(30, 30));
-        let mass2 = new Mass(new Vector2(30, 300));
-        let mass3 = new Mass(new Vector2(300, 30));
-        let mass4 = new Mass(new Vector2(300, 300));
-        this.addMass(mass1);
-        this.addMass(mass2);
-        this.addMass(mass3);
-        this.addMass(mass4);
+            let spring1 = new Spring(mass1, mass2);
+            let spring2 = new Spring(mass1, mass4, 200*Math.sqrt(2));
+            let spring3 = new Spring(mass2, mass4);
+            let spring4 = new Spring(mass3, mass4);
+            let spring5 = new Spring(mass1, mass3);
+            let spring6 = new Spring(mass2, mass3, 200*Math.sqrt(2));
+            this.addSpring(spring1);
+            this.addSpring(spring2);
+            this.addSpring(spring3);
+            this.addSpring(spring4);
+            this.addSpring(spring5);
+            this.addSpring(spring6);
+        }
 
-        let spring1 = new Spring(mass1, mass2);
-        let spring2 = new Spring(mass1, mass4, 200*Math.sqrt(2));
-        let spring3 = new Spring(mass2, mass4);
-        let spring4 = new Spring(mass3, mass4);
-        let spring5 = new Spring(mass1, mass3);
-        let spring6 = new Spring(mass2, mass3, 200*Math.sqrt(2));
-        this.addSpring(spring1);
-        this.addSpring(spring2);
-        this.addSpring(spring3);
-        this.addSpring(spring4);
-        this.addSpring(spring5);
-        this.addSpring(spring6);
-    }
+        if (type === DemoType.CenteredSquare) {
+            let mass1 = new Mass(new Vector2(30, 30));
+            let mass2 = new Mass(new Vector2(30, 300));
+            let mass3 = new Mass(new Vector2(300, 30));
+            let mass4 = new Mass(new Vector2(300, 300));
+            let mass5 = new Mass(new Vector2(150, 150));
+            this.addMass(mass1);
+            this.addMass(mass2);
+            this.addMass(mass3);
+            this.addMass(mass4);
+            this.addMass(mass5);
 
-    public createDemoSystemCenteredSquare():void {
-        let mass1 = new Mass(new Vector2(30, 30));
-        let mass2 = new Mass(new Vector2(30, 300));
-        let mass3 = new Mass(new Vector2(300, 30));
-        let mass4 = new Mass(new Vector2(300, 300));
-        let mass5 = new Mass(new Vector2(150, 150));
-        this.addMass(mass1);
-        this.addMass(mass2);
-        this.addMass(mass3);
-        this.addMass(mass4);
-        this.addMass(mass5);
-
-        let spring1 = new Spring(mass1, mass2);
-        let spring2 = new Spring(mass1, mass3);
-        let spring3 = new Spring(mass2, mass4);
-        let spring4 = new Spring(mass3, mass4);
-        let spring5 = new Spring(mass1, mass5, 100*Math.sqrt(2));
-        let spring6 = new Spring(mass2, mass5, 100*Math.sqrt(2));
-        let spring7 = new Spring(mass3, mass5, 100*Math.sqrt(2));
-        let spring8 = new Spring(mass4, mass5, 100*Math.sqrt(2));
-        this.addSpring(spring1);
-        this.addSpring(spring2);
-        this.addSpring(spring3);
-        this.addSpring(spring4);
-        this.addSpring(spring5);
-        this.addSpring(spring6);
-        this.addSpring(spring7);
-        this.addSpring(spring8);
+            let spring1 = new Spring(mass1, mass2);
+            let spring2 = new Spring(mass1, mass3);
+            let spring3 = new Spring(mass2, mass4);
+            let spring4 = new Spring(mass3, mass4);
+            let spring5 = new Spring(mass1, mass5, 100*Math.sqrt(2));
+            let spring6 = new Spring(mass2, mass5, 100*Math.sqrt(2));
+            let spring7 = new Spring(mass3, mass5, 100*Math.sqrt(2));
+            let spring8 = new Spring(mass4, mass5, 100*Math.sqrt(2));
+            this.addSpring(spring1);
+            this.addSpring(spring2);
+            this.addSpring(spring3);
+            this.addSpring(spring4);
+            this.addSpring(spring5);
+            this.addSpring(spring6);
+            this.addSpring(spring7);
+            this.addSpring(spring8);
+        }
     }
 
     public start():void {

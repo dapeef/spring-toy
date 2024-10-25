@@ -1,4 +1,4 @@
-import { Game, Mass, Spring, Vector2 } from "./classes";
+import { DemoType, Game, Mass, Spring, Vector2 } from "./classes";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 
@@ -17,9 +17,7 @@ canvas.onmousedown = game.mouseDown.bind(game);
 canvas.onmousemove = game.mouseMove.bind(game);
 canvas.onmouseup = game.mouseUp.bind(game);
 
-// game.createDemoSystemTriangle();
-// game.createDemoSystemParallelogram();
-// game.createDemoSystemSquare();
-game.createDemoSystemCenteredSquare();
+const randEnum = Math.floor(Math.random() * Object.keys(DemoType).length / 2)
+game.createDemo(randEnum);
 
 game.start();
